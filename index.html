@@ -34,6 +34,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .ring-val{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;line-height:1;}
 .ring-unit{font-size:8px;color:var(--muted);font-family:'DM Mono',monospace;}
 .ring-name{font-size:10px;color:var(--muted);letter-spacing:0.05em;text-transform:uppercase;font-family:'DM Mono',monospace;}
+.ring-diff{font-family:'DM Mono',monospace;font-size:9px;margin-top:1px;letter-spacing:0.02em;}
 .cal-ring .ring-fill{stroke:var(--cal);}.protein-ring .ring-fill{stroke:var(--protein);}
 .carbs-ring .ring-fill{stroke:var(--carbs);}.fat-ring .ring-fill{stroke:var(--fat);}
 .cal-ring .ring-val{color:var(--cal);}.protein-ring .ring-val{color:var(--protein);}
@@ -191,10 +192,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
     <div class="page active" id="page-today">
       <div class="rings-card">
         <div class="rings-row">
-          <div class="ring-item cal-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-cal" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-cal">0</span><span class="ring-unit">cal</span></div></div><span class="ring-name">Calories</span></div>
-          <div class="ring-item protein-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-protein" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-protein">0</span><span class="ring-unit">g</span></div></div><span class="ring-name">Protein</span></div>
-          <div class="ring-item carbs-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-carbs" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-carbs">0</span><span class="ring-unit">g</span></div></div><span class="ring-name">Carbs</span></div>
-          <div class="ring-item fat-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-fat" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-fat">0</span><span class="ring-unit">g</span></div></div><span class="ring-name">Fat</span></div>
+          <div class="ring-item cal-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-cal" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-cal">0</span><span class="ring-unit">cal</span></div></div><span class="ring-name">Calories</span><span class="ring-diff" id="diff-cal"></span></div>
+          <div class="ring-item protein-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-protein" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-protein">0</span><span class="ring-unit">g</span></div></div><span class="ring-name">Protein</span><span class="ring-diff" id="diff-protein"></span></div>
+          <div class="ring-item carbs-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-carbs" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-carbs">0</span><span class="ring-unit">g</span></div></div><span class="ring-name">Carbs</span><span class="ring-diff" id="diff-carbs"></span></div>
+          <div class="ring-item fat-ring"><div class="ring-wrap"><svg viewBox="0 0 72 72" width="72" height="72"><circle class="ring-bg" cx="36" cy="36" r="31"/><circle class="ring-fill" cx="36" cy="36" r="31" id="ring-fat" stroke-dasharray="194.8" stroke-dashoffset="194.8"/></svg><div class="ring-label"><span class="ring-val" id="val-fat">0</span><span class="ring-unit">g</span></div></div><span class="ring-name">Fat</span><span class="ring-diff" id="diff-fat"></span></div>
         </div>
         <div class="cal-remaining"><div class="cal-remaining-num" id="cal-remaining">1700</div><div class="cal-remaining-label" id="cal-remaining-label">calories remaining</div></div>
       </div>
@@ -615,6 +616,17 @@ document.getElementById('val-cal').textContent=Math.round(t.cal);
 document.getElementById('val-protein').textContent=Math.round(t.protein);
 document.getElementById('val-carbs').textContent=Math.round(t.carbs);
 document.getElementById('val-fat').textContent=Math.round(t.fat);
+// Diffs vs goals — protein over=good(green), others under=good(green)
+['cal','protein','carbs','fat'].forEach(k=>{
+const diff=Math.round(t[k]-GOALS[k]),el=document.getElementById('diff-'+k);
+if(!el||t[k]===0){if(el)el.textContent='';return;}
+const overIsGood=(k==='protein');
+const isGood=overIsGood?(diff>=0):(diff<=0);
+const color=isGood?'#4ade80':'var(--accent3)';
+const sign=diff>0?'+':'';
+const unit=k==='cal'?'':'g';
+el.textContent=`${sign}${diff}${unit}`;el.style.color=color;
+});
 const rem=GOALS.cal-t.cal;
 document.getElementById('cal-remaining').textContent=Math.abs(Math.round(rem));
 document.getElementById('cal-remaining').style.color=rem<0?'var(--accent3)':'var(--cal)';
