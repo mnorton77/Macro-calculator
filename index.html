@@ -865,8 +865,10 @@ const weights=getWeights().slice(-14),c=document.getElementById('weight-log-list
 if(!weights.length){c.innerHTML=`<div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);text-align:center;padding:12px">No weight logged yet</div>`;document.getElementById('weight-current-display').textContent='---';document.getElementById('weight-to-go').textContent='--- to goal';return;}
 const latest=weights[weights.length-1];
 document.getElementById('weight-current-display').textContent=latest.weight+' lbs';
-const toGo=latest.weight-WEIGHT_GOAL;
-document.getElementById('weight-to-go').textContent=toGo>0?`${toGo.toFixed(1)} lbs to go`:'🎯 Goal reached!';
+const toGo=latest.weight-WEIGHT_GOAL;const gained=latest.weight-WEIGHT_START;
+if(gained>0){document.getElementById('weight-to-go').textContent=`${gained.toFixed(1)} lbs up from start`;document.getElementById('weight-to-go').style.color='var(--accent3)';}
+else if(toGo>0){document.getElementById('weight-to-go').textContent=`${toGo.toFixed(1)} lbs to go`;document.getElementById('weight-to-go').style.color='';}
+else{document.getElementById('weight-to-go').textContent='🎯 Goal reached!';document.getElementById('weight-to-go').style.color='';}
 c.innerHTML=[...weights].reverse().slice(0,6).map(w=>`<div class="weight-log-item"><span>${w.date}</span><span class="wval">${w.weight} lbs</span></div>`).join('');
 const ctx=document.getElementById('weightChart').getContext('2d');
 if(weightChart)weightChart.destroy();
@@ -892,7 +894,8 @@ function renderAllWeightChart(){
 const weights=getWeights(),pctEl=document.getElementById('progress-pct'),bar=document.getElementById('goal-progress-bar');
 if(!weights.length){pctEl.textContent='0% complete';bar.style.width='0%';return;}
 const latest=weights[weights.length-1].weight,lost=WEIGHT_START-latest,needed=WEIGHT_START-WEIGHT_GOAL,pct=Math.max(0,Math.min(100,lost/needed*100));
-pctEl.textContent=`${pct.toFixed(0)}% · ${Math.max(0,lost).toFixed(1)} lbs lost`;bar.style.width=pct+'%';
+if(lost<0){pctEl.textContent=`${Math.abs(lost).toFixed(1)} lbs up from start`;pctEl.style.color='var(--accent3)';bar.style.width='0%';bar.style.background='var(--accent3)';}
+else{pctEl.textContent=`${pct.toFixed(0)}% · ${lost.toFixed(1)} lbs lost`;pctEl.style.color='var(--accent)';bar.style.width=pct+'%';bar.style.background='var(--accent)';}
 const ctx=document.getElementById('allWeightChart').getContext('2d');
 if(allWeightChart)allWeightChart.destroy();
 allWeightChart=new Chart(ctx,{type:'line',data:{labels:weights.map(w=>w.date.slice(5)),datasets:[{data:weights.map(w=>w.weight),borderColor:'#e8ff47',backgroundColor:'rgba(232,255,71,0.06)',fill:true,tension:0.4,pointBackgroundColor:'#e8ff47',pointRadius:3,borderWidth:2},{data:weights.map(()=>WEIGHT_GOAL),borderColor:'rgba(71,200,255,0.4)',borderDash:[4,4],pointRadius:0,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#555',font:{family:'DM Mono',size:8}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#666',font:{family:'DM Mono',size:9}},grid:{color:'rgba(255,255,255,0.05)'},min:WEIGHT_GOAL-5,max:WEIGHT_START+2}}}});
