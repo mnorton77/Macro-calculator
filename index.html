@@ -161,6 +161,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
 .src-tag.usda{background:rgba(71,200,255,0.12);color:var(--carbs);}
 .src-tag.local{background:rgba(232,255,71,0.08);color:#999;}
 .section-divider{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin:10px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.eod-btn{display:flex;align-items:center;justify-content:center;gap:8px;background:transparent;color:var(--accent);border:1px solid var(--accent);border-radius:var(--radius);padding:12px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;width:100%;margin-bottom:12px;transition:background 0.2s,color 0.2s;}
+.eod-btn:active{background:var(--accent);color:#0a0a0a;}
+.shake-modal-body{display:flex;flex-direction:column;gap:12px;}
+.shake-modal-q{font-size:16px;font-weight:500;text-align:center;margin-bottom:4px;}
+.shake-modal-btns{display:flex;gap:8px;}
+.shake-modal-btns button{flex:1;padding:14px;border-radius:var(--radius);font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;border:none;}
+.shake-modal-btns .yes-btn{background:var(--accent);color:#0a0a0a;}
+.shake-modal-btns .no-btn{background:var(--surface2);color:var(--text);border:1px solid var(--border);}
+.shake-select{display:flex;flex-direction:column;gap:6px;max-height:220px;overflow-y:auto;}
+.shake-select::-webkit-scrollbar{display:none;}
+.shake-option{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);cursor:pointer;border:1px solid transparent;transition:border-color 0.2s;}
+.shake-option.selected{border-color:var(--accent);}
+.shake-option-name{font-size:13px;font-weight:500;}
+.shake-option-macros{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
 </style>
 </head>
 <body>
@@ -187,6 +201,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <button class="add-btn" onclick="openFoodModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Food</button>
       <div class="section-label">Today's Log</div>
       <div class="food-log" id="food-log"><div class="empty"><div class="empty-icon">🥩</div><div class="empty-text">Nothing logged yet</div></div></div>
+      <button class="eod-btn" onclick="openShakeCheck()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="18" height="18"><path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/><path d="M12 14v3m0-3a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/></svg>End of Day Check</button>
     </div>
     <div class="page" id="page-week">
       <div class="section-label" style="margin-top:4px">7-Day Calories</div>
@@ -291,6 +306,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM San
       <span class="weight-input-lbs">lbs</span>
     </div>
     <button class="log-weight-btn" onclick="logWeight()">Log Weight</button>
+  </div>
+</div>
+
+<!-- SHAKE CHECK MODAL -->
+<div class="modal-overlay" id="shake-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="shake-modal-body" id="shake-step-1">
+      <div class="shake-modal-q">Did you have a protein shake today? 🥤</div>
+      <div class="shake-modal-btns">
+        <button class="yes-btn" onclick="shakeAnswerYes()">Yes, already had one</button>
+        <button class="no-btn" onclick="shakeAnswerNo()">Not yet</button>
+      </div>
+    </div>
+    <div class="shake-modal-body" id="shake-step-2" style="display:none">
+      <div class="shake-modal-q">Pick your protein powder:</div>
+      <div class="shake-select" id="shake-select"></div>
+      <button class="log-food-btn" onclick="logShake()">Log Protein Shake</button>
+    </div>
   </div>
 </div>
 
@@ -471,6 +505,27 @@ const DB=[
 {name:"Beer, regular",cat:"Drinks",per100g:{cal:43,protein:0.5,carbs:3.6,fat:0},defaultG:355,serving:"12oz"},
 {name:"Red wine",cat:"Drinks",per100g:{cal:85,protein:0.1,carbs:2.6,fat:0},defaultG:148,serving:"5oz glass"},
 {name:"Vodka, 1.5oz shot",cat:"Drinks",per100g:{cal:231,protein:0,carbs:0,fat:0},defaultG:44,serving:"1.5oz"},
+// PROTEIN POWDERS
+{name:"ON Gold Standard Whey - Double Rich Chocolate",cat:"Protein Powder",per100g:{cal:375,protein:75,carbs:9,fat:4.7},defaultG:32,serving:"1 scoop"},
+{name:"ON Gold Standard Whey - Vanilla Ice Cream",cat:"Protein Powder",per100g:{cal:375,protein:75,carbs:9,fat:3.1},defaultG:31,serving:"1 scoop"},
+{name:"ON Gold Standard Whey - Cookies & Cream",cat:"Protein Powder",per100g:{cal:375,protein:72,carbs:13,fat:4.7},defaultG:33,serving:"1 scoop"},
+{name:"ON Gold Standard Whey - Strawberry Banana",cat:"Protein Powder",per100g:{cal:375,protein:75,carbs:9,fat:3.1},defaultG:31,serving:"1 scoop"},
+{name:"ON Gold Standard Whey - Mocha Cappuccino",cat:"Protein Powder",per100g:{cal:375,protein:75,carbs:9,fat:4.7},defaultG:32,serving:"1 scoop"},
+{name:"Dymatize ISO100 - Gourmet Chocolate",cat:"Protein Powder",per100g:{cal:370,protein:77,carbs:6.5,fat:1.6},defaultG:31,serving:"1 scoop"},
+{name:"Dymatize ISO100 - Birthday Cake",cat:"Protein Powder",per100g:{cal:370,protein:77,carbs:3.2,fat:1.6},defaultG:31,serving:"1 scoop"},
+{name:"Dymatize Elite Whey - Rich Chocolate",cat:"Protein Powder",per100g:{cal:385,protein:73,carbs:10,fat:5.8},defaultG:36,serving:"1 scoop"},
+{name:"MyProtein Impact Whey - Chocolate Smooth",cat:"Protein Powder",per100g:{cal:388,protein:72,carbs:12,fat:6.8},defaultG:25,serving:"1 scoop"},
+{name:"MyProtein Impact Whey - Vanilla",cat:"Protein Powder",per100g:{cal:396,protein:76,carbs:8,fat:7.2},defaultG:25,serving:"1 scoop"},
+{name:"Ghost Whey - Cereal Milk",cat:"Protein Powder",per100g:{cal:375,protein:73,carbs:10,fat:4.5},defaultG:36,serving:"1 scoop"},
+{name:"Ghost Whey - Peanut Butter Cereal Milk",cat:"Protein Powder",per100g:{cal:385,protein:69,carbs:14,fat:6.9},defaultG:39,serving:"1 scoop"},
+{name:"Isopure Zero Carb - Creamy Vanilla",cat:"Protein Powder",per100g:{cal:367,protein:83,carbs:0,fat:1.7},defaultG:30,serving:"1 scoop"},
+{name:"BSN Syntha-6 - Chocolate Milkshake",cat:"Protein Powder",per100g:{cal:421,protein:47,carbs:26,fat:13},defaultG:47,serving:"1 scoop"},
+{name:"MuscleTech Nitro-Tech - Milk Chocolate",cat:"Protein Powder",per100g:{cal:351,protein:70,carbs:10,fat:5.3},defaultG:46,serving:"1 scoop"},
+{name:"Garden of Life Sport Organic - Chocolate",cat:"Protein Powder",per100g:{cal:333,protein:67,carbs:17,fat:3.3},defaultG:42,serving:"1 scoop"},
+{name:"Vega Sport Premium - Chocolate",cat:"Protein Powder",per100g:{cal:341,protein:68,carbs:14,fat:4.5},defaultG:44,serving:"1 scoop"},
+{name:"Premier Protein Powder - Chocolate",cat:"Protein Powder",per100g:{cal:370,protein:74,carbs:7.4,fat:4.6},defaultG:35,serving:"1 scoop"},
+{name:"Naked Whey - Unflavored",cat:"Protein Powder",per100g:{cal:400,protein:80,carbs:10,fat:3.3},defaultG:30,serving:"1 scoop"},
+{name:"Transparent Labs 100% Grass-Fed Whey - Chocolate",cat:"Protein Powder",per100g:{cal:375,protein:75,carbs:6.3,fat:3.1},defaultG:32,serving:"1 scoop"},
 ];
 
 const RESTAURANTS={
@@ -482,7 +537,8 @@ const RESTAURANTS={
 "Potbelly":[{name:"Turkey Breast Sandwich",cal:490,protein:34,carbs:60,fat:12,serving:"reg"},{name:"Mediterranean Sandwich",cal:520,protein:22,carbs:62,fat:18,serving:"reg"},{name:"Meatball Sandwich",cal:700,protein:36,carbs:68,fat:30,serving:"reg"},{name:"Farmhouse Salad",cal:330,protein:26,carbs:20,fat:16,serving:"1 salad"}],
 "Tavern Grill":[{name:"Tavern Burger",cal:780,protein:46,carbs:52,fat:40,serving:"1 burger"},{name:"Grilled Salmon",cal:520,protein:48,carbs:18,fat:28,serving:"1 plate"},{name:"Ribeye 12oz",cal:980,protein:72,carbs:4,fat:64,serving:"12oz"},{name:"Fish Tacos (3)",cal:620,protein:32,carbs:58,fat:24,serving:"3 tacos"},{name:"House Salad",cal:220,protein:8,carbs:18,fat:12,serving:"1 salad"}],
 "Looks Eatery":[{name:"Grilled Chicken Bowl",cal:520,protein:46,carbs:42,fat:18,serving:"1 bowl"},{name:"Salmon Power Bowl",cal:580,protein:44,carbs:38,fat:22,serving:"1 bowl"},{name:"Turkey Wrap",cal:490,protein:36,carbs:46,fat:16,serving:"1 wrap"},{name:"Egg White Scramble",cal:280,protein:28,carbs:12,fat:12,serving:"1 plate"}],
-"Tinners Public House":[{name:"Tinner Burger",cal:840,protein:48,carbs:56,fat:44,serving:"1 burger"},{name:"Grilled Chicken Sandwich",cal:620,protein:42,carbs:48,fat:22,serving:"1"},{name:"Fish & Chips",cal:870,protein:38,carbs:74,fat:42,serving:"1 plate"},{name:"Steak Frites",cal:920,protein:58,carbs:44,fat:52,serving:"1 plate"},{name:"Pretzel Bites",cal:440,protein:12,carbs:62,fat:16,serving:"1 order"}]
+"Tinners Public House":[{name:"Tinner Burger",cal:840,protein:48,carbs:56,fat:44,serving:"1 burger"},{name:"Grilled Chicken Sandwich",cal:620,protein:42,carbs:48,fat:22,serving:"1"},{name:"Fish & Chips",cal:870,protein:38,carbs:74,fat:42,serving:"1 plate"},{name:"Steak Frites",cal:920,protein:58,carbs:44,fat:52,serving:"1 plate"},{name:"Pretzel Bites",cal:440,protein:12,carbs:62,fat:16,serving:"1 order"}],
+"Texas Roadhouse":[{name:"6oz Sirloin",cal:250,protein:36,carbs:0,fat:12,serving:"6oz"},{name:"8oz Sirloin",cal:340,protein:48,carbs:0,fat:16,serving:"8oz"},{name:"12oz Ribeye",cal:740,protein:60,carbs:0,fat:54,serving:"12oz"},{name:"6oz Filet",cal:270,protein:40,carbs:0,fat:12,serving:"6oz"},{name:"8oz NY Strip",cal:460,protein:52,carbs:0,fat:28,serving:"8oz"},{name:"Country Fried Sirloin",cal:900,protein:48,carbs:64,fat:50,serving:"1 plate"},{name:"Grilled Chicken",cal:300,protein:52,carbs:2,fat:8,serving:"1 breast"},{name:"Herb Crusted Chicken",cal:440,protein:54,carbs:12,fat:18,serving:"1 plate"},{name:"Grilled Salmon",cal:470,protein:50,carbs:2,fat:28,serving:"8oz"},{name:"Pulled Pork Dinner",cal:580,protein:40,carbs:48,fat:24,serving:"1 plate"},{name:"Baked Potato (plain)",cal:270,protein:7,carbs:61,fat:0,serving:"1"},{name:"Baked Potato (loaded)",cal:480,protein:14,carbs:64,fat:20,serving:"1"},{name:"Mashed Potatoes",cal:220,protein:4,carbs:30,fat:10,serving:"1 side"},{name:"Steak Fries",cal:340,protein:5,carbs:46,fat:16,serving:"1 side"},{name:"Fresh Vegetables",cal:60,protein:2,carbs:8,fat:2,serving:"1 side"},{name:"Grilled Asparagus",cal:60,protein:4,carbs:6,fat:3,serving:"1 side"},{name:"Caesar Side Salad",cal:220,protein:8,carbs:14,fat:16,serving:"1 salad"},{name:"House Side Salad",cal:130,protein:6,carbs:12,fat:7,serving:"1 salad"},{name:"Rolls w/ Cinnamon Butter (1)",cal:227,protein:5,carbs:32,fat:9,serving:"1 roll"},{name:"Killer Ribs (half rack)",cal:860,protein:52,carbs:38,fat:54,serving:"half rack"}]
 };
 
 // ── STORAGE ───────────────────────────────────────────────
@@ -843,6 +899,45 @@ allWeightChart=new Chart(ctx,{type:'line',data:{labels:weights.map(w=>w.date.sli
 }
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+
+// ── END OF DAY SHAKE CHECK ──────────────────────────────
+let selectedShake=null;
+function openShakeCheck(){
+const log=getLog();
+const hadShake=log.some(f=>f.name&&(f.name.toLowerCase().includes('protein powder')||f.name.toLowerCase().includes('protein shake')||f.name.toLowerCase().includes('whey')));
+document.getElementById('shake-step-1').style.display='flex';
+document.getElementById('shake-step-2').style.display='none';
+selectedShake=null;
+document.getElementById('shake-modal').classList.add('open');
+if(hadShake){showToast('Looks like you already logged a shake today! 💪');closeModal('shake-modal');return;}
+}
+function shakeAnswerYes(){closeModal('shake-modal');showToast('Nice, protein locked in! 💪');}
+function shakeAnswerNo(){
+document.getElementById('shake-step-1').style.display='none';
+document.getElementById('shake-step-2').style.display='flex';
+selectedShake=null;
+const powders=DB.filter(f=>f.cat==='Protein Powder');
+const container=document.getElementById('shake-select');
+container.innerHTML=powders.map((p,i)=>{
+const cal=Math.round(p.per100g.cal*p.defaultG/100);
+const pro=Math.round(p.per100g.protein*p.defaultG/100);
+return `<div class="shake-option" onclick="pickShake(${i},this)"><div><div class="shake-option-name">${p.name}</div><div class="shake-option-macros">${cal} cal · ${pro}g protein · ${p.serving}</div></div></div>`;
+}).join('');
+}
+function pickShake(idx,el){
+selectedShake=DB.filter(f=>f.cat==='Protein Powder')[idx];
+document.querySelectorAll('.shake-option').forEach(o=>o.classList.remove('selected'));
+el.classList.add('selected');
+}
+function logShake(){
+if(!selectedShake){showToast('Pick a protein powder first');return;}
+const g=selectedShake.defaultG||32;const m=g/100;
+const entry={name:selectedShake.name,brand:'Protein Powder',cal:selectedShake.per100g.cal*m,protein:selectedShake.per100g.protein*m,carbs:selectedShake.per100g.carbs*m,fat:selectedShake.per100g.fat*m,servingDesc:'1 scoop in water',time:Date.now()};
+const log=getLog();log.push(entry);saveLog(log);
+const recent=getRecent().filter(r=>r.name!==selectedShake.name);recent.unshift({...selectedShake});saveRecent(recent);
+renderTodayLog();updateRings();closeModal('shake-modal');showToast('Logged '+selectedShake.name.split(' - ')[0]+' shake 🥤');
+}
+document.getElementById('shake-modal').addEventListener('click',e=>{if(e.target===document.getElementById('shake-modal'))closeModal('shake-modal');});
 </script>
 
 </body>
